@@ -2,6 +2,7 @@ import { where } from "sequelize";
 import db from "../models/index";
 import bcrypt from 'bcryptjs';
 import { raw } from "body-parser";
+import { reject } from "bcrypt/promises";
 
 
 const salt = bcrypt.genSaltSync(10);
@@ -28,7 +29,7 @@ let handleUserLogin = (email, password) => {
                 // user already exist
                 // compare password
                 let user = await db.User.findOne({ //tim 1 user
-                    attributes: ['email', 'roleId', 'password'],
+                    attributes: ['email', 'roleId', 'password', 'firstName', 'lastName'],
                     where: { email: email },
                     raw: true
                 });
@@ -122,8 +123,9 @@ let createNewUser = (data) => {
                     lastName: data.lastName,
                     address: data.address,
                     phonenumber: data.phonenumber,
-                    gender: data.gender === '1' ? true : false,
-                    roleId: data.roleId
+                    gender: data.gender,
+                    roleId: data.roleId,
+                    positionId: data.positionId
                 })
             }
 
@@ -204,6 +206,30 @@ let updateUserData = (data) => {
         }
     })
 }
+let getAllCodeService = (typeInput) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!typeInput) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing required paramenters'
+                })
+            } else {
+                let res = {};
+                let allcode = await db.Allcode.findAll({
+                    where: { type: typeInput }  //select * from allcode where type = typeInput
+                });
+                res.errCode = 0;
+                res.data = allcode;
+                resolve(res)
+            }
+
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
 module.exports = {
-    handleUserLogin, checkUserEmail, getAllUsers, createNewUser, hashUserPassword, deleteUser, updateUserData
+    handleUserLogin, checkUserEmail, getAllUsers, createNewUser, hashUserPassword, deleteUser, updateUserData,
+    getAllCodeService
 }

@@ -21,6 +21,17 @@ module.exports = {
             valueVi: {
                 type: Sequelize.STRING
             },
+            createdAt: {
+                allowNull: false,
+                type: Sequelize.DATE,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+            },
+            updatedAt: {
+                allowNull: false,
+                type: Sequelize.DATE,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),  // Thiết lập mặc định là thời gian hiện tại
+                onUpdate: Sequelize.literal('CURRENT_TIMESTAMP')
+            }
         });
     },
     async down(queryInterface, Sequelize) {

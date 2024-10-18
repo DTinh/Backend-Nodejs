@@ -1,6 +1,9 @@
 import express from "express";
 import homeController, { getHomePage, getCRUD, postCRUD, displayGetCRUD, getEditCRUD, putCRUD, deleteCRUD } from "../controllers/homeController";
-import userController, { handleLogin, handleGetAllUsers, handleCreateNewUser, handleEditUser, handleDeleteUser } from "../controllers/userController";
+import userController, {
+    handleLogin, handleGetAllUsers, handleCreateNewUser, handleEditUser, handleDeleteUser,
+    getAllCode
+} from "../controllers/userController";
 let router = express.Router();
 
 let initWebRoutes = (app) => {
@@ -18,6 +21,8 @@ let initWebRoutes = (app) => {
     router.post('/api/create-new-user', handleCreateNewUser);
     router.put('/api/edit-user', handleEditUser);
     router.delete('/api/delete-user', handleDeleteUser);
+
+    router.get('/api/allcode', getAllCode);
 
 
 
