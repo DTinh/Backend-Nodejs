@@ -1,9 +1,12 @@
 import { where } from "sequelize";
 import db from "../models/index";
+require('dotenv').config();
+import _ from 'lodash';
 
 const { reject } = require("bcrypt/promises")
 
 
+const MAX_NUMBER_SCHEDULE = process.env.MAX_NUMBER_SCHEDULE;
 let getTopDoctorHome = (limitInput) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -52,18 +55,33 @@ let getAllDoctors = () => {
 let saveDetailInforDoctor = (inputData) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!inputData.doctorId || !inputData.contentHTML || !inputData.contentMarkdown) {
+            if (!inputData.doctorId || !inputData.contentHTML
+                || !inputData.contentMarkdown || !inputData.action) {
                 resolve({
                     errCode: 1,
                     errMessage: 'Missing parameter'
                 })
             } else {
-                await db.Markdown.create({
-                    contentHTML: inputData.contentHTML,
-                    contentMarkdown: inputData.contentMarkdown,
-                    description: inputData.description,
-                    doctorId: inputData.doctorId
-                })
+                if (inputData.action === 'CREATE') {
+                    await db.Markdown.create({
+                        contentHTML: inputData.contentHTML,
+                        contentMarkdown: inputData.contentMarkdown,
+                        description: inputData.description,
+                        doctorId: inputData.doctorId
+                    })
+                } else if (inputData.action === 'EDIT') {
+                    let doctorMarkdown = await db.Markdown.findOne({
+                        where: { doctorId: inputData.doctorId },
+                        raw: false
+                    })
+                    if (doctorMarkdown) {
+                        doctorMarkdown.contentHTML = inputData.contentHTML;
+                        doctorMarkdown.contentMarkdown = inputData.contentMarkdown;
+                        doctorMarkdown.description = inputData.description;
+                        doctorMarkdown.updateAt = new Date();
+                        await doctorMarkdown.save()
+                    }
+                }
                 resolve({
                     errCode: 0,
                     errMessage: "Save infor doctor succed"
@@ -112,6 +130,79 @@ let getDetailDoctorById = (inputId) => {
         }
     })
 }
+let bulkCreateSchedule = (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!data.arrSchedule || !data.doctorId || !data.formatedDate) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing require parameter'
+                })
+            } else {
+                let schedule = data.arrSchedule;
+                if (schedule && schedule.length > 0) {
+                    schedule = schedule.map(item => {
+                        item.maxNumber = MAX_NUMBER_SCHEDULE;
+                        return item;
+                    })
+                }
+                let existing = await db.Schedule.findAll(
+                    {
+                        where: { doctorId: data.doctorId, date: data.formatedDate },
+                        attributes: ['timeType', 'date', 'doctorId', 'maxNumber'],
+                        raw: true
+                    },
+                )
+                let toCreate = _.differenceWith(schedule, existing, (a, b) => {
+                    return a.timeType === b.timeType && +a.date === +b.date;
+                });
+                if (toCreate && toCreate.length > 0) {
+                    await db.Schedule.bulkCreate(toCreate);
+                }
+                // console.log(toCreate);
+                resolve({
+                    errCode: 0,
+                    errMessage: 'OK'
+                })
+
+            }
+
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+let getScheduleByDate = (doctorId, date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!doctorId || !date) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing require parameter'
+                })
+            } else {
+                let dataSchedule = await db.Schedule.findAll({
+                    where: {
+                        doctorId: doctorId,
+                        date: date
+                    },
+                    include: [
+                        { model: db.Allcode, as: 'timeTypeData', attributes: ['valueEn', 'valueVi'] },
+                    ],
+                    raw: false,
+                    nest: true
+                })
+                if (!dataSchedule) dataSchedule = [];
+                resolve({
+                    errCode: 0,
+                    data: dataSchedule
+                })
+            }
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
 module.exports = {
-    getTopDoctorHome, getAllDoctors, saveDetailInforDoctor, getDetailDoctorById
+    getTopDoctorHome, getAllDoctors, saveDetailInforDoctor, getDetailDoctorById, bulkCreateSchedule, getScheduleByDate
 }
