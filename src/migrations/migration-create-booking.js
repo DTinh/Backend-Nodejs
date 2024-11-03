@@ -19,11 +19,19 @@ module.exports = {
                 type: Sequelize.INTEGER
             },
             date: {
-                type: Sequelize.DATE
+                type: Sequelize.STRING
             },
             timeType: {
                 type: Sequelize.STRING
             },
+            createdAt: {
+                allowNull: false,
+                type: Sequelize.DATE
+            },
+            updatedAt: {
+                allowNull: false,
+                type: Sequelize.DATE
+            }
         });
     },
     async down(queryInterface, Sequelize) {

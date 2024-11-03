@@ -8,6 +8,7 @@ import doctorController, {
     getTopDoctorHome, getAllDoctors, postInforDoctor, getDetailDoctorById, bulkCreateSchedule, getScheduleByDate,
     getExtraInforDoctorById, getProfileDoctorId
 } from "../controllers/doctorController"
+import patientController, { postBookAppointment } from "../controllers/patientController";
 let router = express.Router();
 
 let initWebRoutes = (app) => {
@@ -36,6 +37,8 @@ let initWebRoutes = (app) => {
     router.get('/api/get-extra-infor-doctor-by-id', getExtraInforDoctorById);
     router.get('/api/get-profile-doctor-by-id', getProfileDoctorId);
 
+
+    router.post('/api/patient-book-appointment', postBookAppointment);
 
 
 
