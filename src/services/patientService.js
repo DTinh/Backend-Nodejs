@@ -3,6 +3,7 @@ import db from "../models/index";
 require('dotenv').config();
 import _ from 'lodash';
 import { raw } from "body-parser";
+import emailService from './emailService';
 
 let postBookAppointment = (data) => {
     return new Promise(async (resolve, reject) => {
@@ -13,6 +14,14 @@ let postBookAppointment = (data) => {
                     errMessage: 'Missing required parameter'
                 })
             } else {
+                await emailService.sendSimpleEmail({
+                    receiverEmail: data.email,
+                    patientName: 'Phương Chi',
+                    time: '8:30 - 9:00 Thứ năm 7/11/2024',
+                    doctorName: 'Duy Tính',
+                    redirectLink: 'https://www.youtube.com/watch?v=0GL--Adfqhc'
+                });
+
                 //up sert
                 let user = await db.User.findOrCreate({
                     where: { email: data.email },
