@@ -20,24 +20,48 @@ let sendSimpleEmail = async (dataSend) => {
             to: dataSend.receiverEmail, // list of receivers
             subject: "Thông tin đặt lịch khám bệnh", // Subject line
             text: "Hello world?", // plain text body
-            html: `
-                <h3>Xin chào ${dataSend.patientNAme}</h3>
-                <p>Bạn nhận được email này vì đã đặt lịch khám bệnh online trên Booking Care</p>
-                <p>Thông tin đặt lịch khám bệnh: </p>
-                <div><b>Thời gian: ${dataSend.time}</b></div>
-                <div><b>Thời gian: ${dataSend.doctorName}</b></div>
-                <p>Nếu các thông tin trên là đúng sự thật, vui long click vào đường link bên dưới để xác nhận và hoàn tất thủ tục đặt lịch khám bệnh</p>
-                <div>
-                    <a href="${dataSend.redirectLink} target="_blank">Click here</a>
-                </div>
-                <div>Xin chân thành cảm ơn</div>
-            `, // html body
+            html: getBodyHTMLEmail(dataSend),
         });
     } catch (e) {
         console.log(e)
     }
 }
 
+let getBodyHTMLEmail = (dataSend) => {
+    let result = '';
+    if (dataSend.language === 'vi') {
+        result =
+            ` 
+        <h3>Xin chào ${dataSend.patientName}</h3>
+        <p>Bạn nhận được email này vì đã đặt lịch khám bệnh online trên Booking Care</p>
+        <p>Thông tin đặt lịch khám bệnh: </p>
+        <div><b>Thời gian: ${dataSend.time}</b></div>
+        <div><b>Tên bác sĩ ${dataSend.doctorName}</b></div>
+        <p>Nếu các thông tin trên là đúng sự thật, vui long click vào đường link bên dưới để xác nhận và hoàn tất thủ tục đặt lịch khám bệnh</p>
+        <div>
+            <a href="${dataSend.redirectLink} target="_blank">Click here</a>
+        </div>
+        <div>Xin chân thành cảm ơn!</div>
+    `
+    }
+    if (dataSend.language === 'en') {
+        result =
+            ` 
+        <h3>Dear ${dataSend.patientName}</h3>
+        <p>You received this email because you booked an online medical appointment on Booking Care.</p>
+        <p>Appointment information: </p>
+        <div><b>Time: ${dataSend.time}</b></div>
+        <div><b>Name Doctor: ${dataSend.doctorName}</b></div>
+        <p>If the above information is correct, please click on the link below to confirm and complete the appointment procedure.</p>
+        <div>
+            <a href="${dataSend.redirectLink} target="_blank">Click here</a>
+        </div>
+        <div>Thank you so much!</div>
+    `
+    }
+
+    return result;
+}
 
 
 
