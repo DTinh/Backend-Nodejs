@@ -1,7 +1,7 @@
 import { where } from "sequelize";
 import db from "../models/index";
 require('dotenv').config();
-import _ from 'lodash';
+import _, { includes } from 'lodash';
 import { raw } from "body-parser";
 
 const { reject } = require("bcrypt/promises")
@@ -111,9 +111,6 @@ let saveDetailInforDoctor = (inputData) => {
                     },
                     raw: false
                 })
-                // || !inputData.selectedPrice || !inputData.selectedPayment
-                // || !inputData.selectProvince || !inputData.nameClinic
-                // || !inputData.addressClinic || !inputData.note
                 if (doctorInfor) {
                     //update
                     doctorInfor.doctorId = inputData.doctorId;
@@ -125,7 +122,7 @@ let saveDetailInforDoctor = (inputData) => {
                     doctorInfor.addressClinic = inputData.addressClinic;
                     doctorInfor.note = inputData.note;
                     doctorInfor.specialtyId = inputData.specialtyId;
-                    // doctorInfor.clinicId = inputData.clinicId;
+                    doctorInfor.clinicId = inputData.clinicId;
                     await doctorInfor.save()
                 } else {
                     //create
@@ -360,7 +357,43 @@ let getProfileDoctorId = (inputId) => {
         }
     })
 }
+let getListPatientForDoctor = (doctorId, date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!doctorId || !date) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing require parameter'
+                })
+            } else {
+                let data = await db.Booking.findAll({
+                    where: {
+                        statusId: 'S2',
+                        doctorId: doctorId,
+                        date: date
+                    },
+                    include: [
+                        {
+                            model: db.User,
+                            as: 'patientData',
+                            attributes: ['email', 'firstName', 'address', 'gender'],
+                            include: [{ model: db.Allcode, as: 'genderData', attributes: ['valueEn', 'valueVi'] }]
+                        },
+                    ],
+                    raw: false,
+                    nest: true
+                })
+                resolve({
+                    errCode: 0,
+                    data
+                })
+            }
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
 module.exports = {
     getTopDoctorHome, getAllDoctors, saveDetailInforDoctor, getDetailDoctorById, bulkCreateSchedule,
-    getScheduleByDate, getExtraInforDoctorById, getProfileDoctorId
+    getScheduleByDate, getExtraInforDoctorById, getProfileDoctorId, getListPatientForDoctor
 }
