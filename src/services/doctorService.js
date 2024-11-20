@@ -1,9 +1,9 @@
 import { where } from "sequelize";
 import db from "../models/index";
 require('dotenv').config();
-import _, { includes } from 'lodash';
+import _, { includes, partial } from 'lodash';
 import { raw } from "body-parser";
-
+import emailService from '../services/emailService'
 const { reject } = require("bcrypt/promises")
 
 
@@ -379,6 +379,9 @@ let getListPatientForDoctor = (doctorId, date) => {
                             attributes: ['email', 'firstName', 'address', 'gender'],
                             include: [{ model: db.Allcode, as: 'genderData', attributes: ['valueEn', 'valueVi'] }]
                         },
+                        {
+                            model: db.Allcode, as: 'timeTypeDataPatient', attributes: ['valueEn', 'valueVi']
+                        }
                     ],
                     raw: false,
                     nest: true
@@ -393,7 +396,42 @@ let getListPatientForDoctor = (doctorId, date) => {
         }
     })
 }
+let sendRemedy = (data) => {
+    try {
+        return new Promise(async (resolve, reject) => {
+            if (!data.email || !data.doctorId || !data.patientId || !data.timeType || !data.imgBase64) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing require parameter'
+                })
+            } else {
+                //update patient status
+                let appointment = await db.Booking.findOne({
+                    where: {
+                        doctorId: data.doctorId,
+                        patientId: data.patientId,
+                        timeType: data.timeType,
+                        statusId: 'S2'
+                    },
+                    raw: false
+                })
+                if (appointment) {
+                    appointment.statusId = 'S3';
+                    await appointment.save()
+                }
+                //send mail remedy
+                await emailService.sendAttachment(data);
+                resolve({
+                    errCode: 0,
+                    errMessage: "ok"
+                })
+            }
+        })
+    } catch (e) {
+        reject(e)
+    }
+}
 module.exports = {
     getTopDoctorHome, getAllDoctors, saveDetailInforDoctor, getDetailDoctorById, bulkCreateSchedule,
-    getScheduleByDate, getExtraInforDoctorById, getProfileDoctorId, getListPatientForDoctor
+    getScheduleByDate, getExtraInforDoctorById, getProfileDoctorId, getListPatientForDoctor, sendRemedy
 }
